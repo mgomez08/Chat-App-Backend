@@ -2,6 +2,7 @@ const {
   userConnect,
   userDisconnect,
   getUsers,
+  saveMessage,
 } = require("../controllers/sockets");
 const { checkJWT } = require("../helpers/jwt");
 
@@ -21,7 +22,13 @@ class Sockets {
       }
       //User is connect
       await userConnect(uid);
+      socket.join(uid);
       console.log("Cliente conectado ", uid);
+      socket.on("personal-message", async (payload) => {
+        const message = await saveMessage(payload);
+        this.io.to(payload.to).emit("personal-message", message);
+        this.io.to(payload.from).emit("personal-message", message);
+      });
       //Emit all users connected
       this.io.emit("users-list", await getUsers());
       //UserDisconnect
